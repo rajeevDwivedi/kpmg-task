@@ -7,8 +7,7 @@ function Landing() {
   return (
     <>
       <Grid container spacing={2}>
-        <Grid size={7}></Grid>
-        <Grid size={5}>
+        <Grid  size={{ xs: 12, md: 7, sm: 12, lg:5 }} offset={{ xs: 0, md: 1, sm: 0, lg: 7 }}>
           <Box
             mt={5}
             sx={{
@@ -55,6 +54,7 @@ function Landing() {
               marginTop: "55px",
             }}
           />
+          <Grid  size={{ xs: 12, md: 12, sm: 12, lg: 12 }}>
           <Box sx={{ p: 1 }}>
             <Typography
               variant="h3"
@@ -64,6 +64,7 @@ function Landing() {
               <br /> dummy text,{" "}
               <Typography
                 variant="h3"
+                component="span"
                 sx={{ color: "blue", display: "inline" }}
               >
                 LOREM
@@ -98,7 +99,7 @@ function Landing() {
               Get started today!
             </Button>
           </Box>
-          <Box sx={{ textAlign: "left", marginTop: "15px", ml: 1 }}>
+          <Box sx={{ textAlign: "left", marginTop: "25px", ml: 1, mb:2 }}>
             <Button
               onClick={() => navigate("/chat")}
               variant="contained"
@@ -128,6 +129,7 @@ function Landing() {
               Learn More
             </Button>
           </Box>
+          </Grid>
         </Grid>
       </Grid>
     </>
