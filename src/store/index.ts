@@ -1,24 +1,5 @@
 import { create } from "zustand";
-
-interface ChatData {
-  choices: Array<{
-    delta: {
-      content?: string;
-      role?: string;
-    };
-  }>;
-}
-
-interface Chat {
-  id: number;
-  role: string;
-  data: ChatData[];
-}
-
-interface State {
-  chats: Chat[];
-  submitChat: (chatData: ChatData) => void;
-}
+import type { Chat, ChatData, State } from "../types/chat";
 
 
 const useStore = create<State>((set) => ({

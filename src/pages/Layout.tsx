@@ -1,27 +1,33 @@
-import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
-import Typography from '@mui/material/Typography';
 import LeftSide from '../components/LeftSide';
 import SearchInput from '../components/SearchInput';
-import { Button, ListItemIcon, Paper } from '@mui/material';
-import AssistantIcon from '@mui/icons-material/SmartToy'; // Example icon
-import UserIcon from '@mui/icons-material/Person';
+import { Paper, useMediaQuery, useTheme } from '@mui/material';
 import logo from '../assets/logo.png';
-import regenerate from '../assets/regenerate.png';
 import useStore from '../store';
+import ChatList from '../components/Chat';
+import type { Chat } from '../types/chat';
 
 const Layout = () => {
-  const [open, setOpen] = React.useState<boolean>(true);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const chats = useStore((state) => state.chats);
-  const [chatsList, setChatsList] = React.useState<Props>(chats);
-  // Log the initial state of chats
 
-  React.useEffect(() => {
-    // const chatsData = useStore.getState().chats;
+  const [open, setOpen] = useState<boolean>(true);
+  const [chatsList, setChatsList] = useState<Chat[]>(chats);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+
+  useEffect(() => {
     setChatsList(chats);
-    console.log('Initial chats:', chatsList);
   }, [chats, chatsList]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatsList]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -31,43 +37,50 @@ const Layout = () => {
     setOpen(false);
   };
 
-  interface Chat {
-    created: number;
-    choices: Array<{
-      delta: {
-        role?: string;
-        content?: string;
-      };
-    }>;
-  }
-
-  interface Props {
-    chatsList: Chat[];
-  }
-
-
   return (
-    <Box sx={{ display: 'flex' }}>
-      <LeftSide open={open} handleDrawerOpen={handleDrawerOpen} handleDrawerClose={handleDrawerClose} />
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      <LeftSide open={open} handleDrawerOpen={handleDrawerOpen} handleDrawerClose={handleDrawerClose} isMobile={isMobile} />
       <CssBaseline />
-      <Box component="main" sx={{ flexGrow: 1, p: 2, backgroundColor: '#f5f5f5', minHeight: '100vh' }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', mt: 3, width: '100%' }}>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: { xs: 1, sm: 2, md: 3 },
+          backgroundColor: '#f5f5f5',
+          minHeight: '100vh',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            mt: 3,
+            width: '100%',
+            flexDirection: { xs: 'column', md: 'row' },
+          }}
+        >
           <img src={logo} alt="Logo" style={{
             width: 40, height: 40,
             background: 'radial-gradient(140% 57.5% at 52.5% 50%, #459AFF 0%, #6054FF 100%)', borderRadius: '50%', cursor: 'pointer'
           }}
             onClick={open ? handleDrawerClose : handleDrawerOpen}
           />
+
           <Paper
             elevation={0}
             sx={{
-              ml: 3,
+              ml: { xs: 0, md: 3 },
+              mt: { xs: 2, md: 0 },
               display: 'flex',
-              width: '1214px',
-              maxWidth: 1214,
-              height: 730,
+              width: '100%',
+              maxWidth: { xs: '100%', md: 1214 },
+              height: { xs: '60vh', md: 730 },
               overflowY: 'auto',
+              '&::-webkit-scrollbar': { display: 'none' },
+              scrollbarWidth: 'none',
+              '-ms-overflow-style': 'none',
             }}
+            ref={containerRef}
           >
 
             <Box p={3} sx={{ width: '100%' }}>
@@ -75,90 +88,19 @@ const Layout = () => {
                 const role = chatObj.role || 'user';
                 const isAssistant = role === 'assistant';
 
-                return (<Box
-                  key={chatObj.id}
-                  sx={{
-                    display: 'flex',
-                    justifyContent: isAssistant ? 'flex-end' : 'flex-start',
-                    mb: 2,
-                    width: '100%'
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      p: 2,
-                      backgroundColor: isAssistant ? '#e3f2fd' : '#f1f1f1',
-                      borderRadius: isAssistant ? '0 8px 8px 8px' : '8px 0 8px 8px',
-                      // maxWidth: '100%',
-                      width: '100%'
-                    }}
-                  >
-                    <ListItemIcon
-                      sx={{
-                        // minWidth: 0,
-                        mr: 1.5,
-                        color: isAssistant ? 'primary.main' : 'text.secondary',
-                      }}
-                    >
-                      {isAssistant ? <AssistantIcon /> : <UserIcon />}
-                    </ListItemIcon>
-                    <Box>
-                      <Typography variant="h6" sx={{ textTransform: 'capitalize', mb: 0.5 }}>
-                        {role}
-                      </Typography>
-                      {
-                        chatObj.data.map(chat => {
-                          // const choice = chat.choices[0];
-                          const delta = chat.choices[0]?.delta || {};
-
-                          return (
-                            <React.Fragment key={chat.created}>
-                              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {delta.content}
-                              </Typography>
-                              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                                Created at: {new Date(chat.created * 1000).toLocaleString()}
-                              </Typography>
-                            </React.Fragment>
-                          );
-                        })
-                      }
-                    </Box>
-                  </Box>
-                </Box>
+                return (
+                  <ChatList key={chatObj.id} chatObj={chatObj} role={role} isAssistant={isAssistant} />
                 );
               })}
+
+              <div ref={bottomRef} />
             </Box>
 
           </Paper>
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-          <Button
-            variant="outlined"
-            sx={{
-              textTransform: 'none',
-              border: '1px solid rgba(81, 161, 255, 1)',
-              width: 218,
-              height: 54,
-              color: 'rgba(81, 161, 255, 1)',
-              borderRadius: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1,
-            }}
-            size="medium"
-            href="#text-buttons"
-            startIcon={
-              <img src={regenerate} alt="Regenerate Icon" style={{ width: 14, height: 14 }} />
-            }
-          >
-            Regenerate Response
-          </Button>
+          <SearchInput open={open} />
         </Box>
-        <SearchInput open={open} />
       </Box>
     </Box>
   )

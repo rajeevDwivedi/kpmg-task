@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { styled, type Theme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import MuiDrawer from "@mui/material/Drawer";
@@ -12,12 +13,14 @@ import ListItemText from "@mui/material/ListItemText";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { Avatar, Button } from "@mui/material";
+import { Avatar, Button, IconButton } from "@mui/material";
 import logo from "../assets/logo.png";
 import search from "../assets/search.png";
 import message from "../assets/message.png";
 import { useNavigate } from "react-router-dom";
 import type { DrawerProps } from "../types/drawer";
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import useStore from '../store';
 
 const drawerWidth = 348;
@@ -68,10 +71,18 @@ const Drawer = styled(MuiDrawer, {
   ],
 }));
 
+const newChat = () => {
+  useStore.setState({ chats: [] });
+}
 
 const LeftSide = (props: DrawerProps) => {
   const { open } = props;
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
+  const handleListItemClick = (index: number) => {
+    console.log("Clicked item index:", index);
+    setActiveIndex(index);
+  };
   const chatsList = useStore((state) => state.chats);
   const navigate = useNavigate();
   return (
@@ -121,6 +132,7 @@ const LeftSide = (props: DrawerProps) => {
                       background: "linear-gradient(90deg, #459AFF 0%, #6054FF 100%)",
                     }}
                     size="medium"
+                    onClick={newChat}
                   >
                     {" "}
                     <AddIcon /> New Chat
@@ -175,7 +187,9 @@ const LeftSide = (props: DrawerProps) => {
                     display: "flex",
                     textAlign: "center",
                     justifyContent: "center",
+                    cursor: "pointer"
                   }}
+                   onClick={newChat}
                 >
                   <Avatar sx={{ background: "linear-gradient(90deg, #459AFF 0%, #6054FF 100%)" }}>
                     <AddIcon />
@@ -246,7 +260,7 @@ const LeftSide = (props: DrawerProps) => {
                   <Button
                     sx={{ textTransform: "none" }}
                     size="small"
-                    href="#text-buttons"
+                    onClick={newChat}
                   >
                     Clear All
                   </Button>
@@ -323,11 +337,12 @@ const LeftSide = (props: DrawerProps) => {
               <Divider />
 
               <List>
-                {chatsList?.map((chats, index) => {
+                {chatsList.filter(d => d.role === 'user')?.map((chats) => {
                   return chats?.data?.map(chat => {
-                    const delta = chat.choices[0]?.delta.role === 'user' && chat.choices[0]?.delta;
-                       return (<ListItem key={delta.content} disablePadding sx={{ display: "block" }}>
+                    const delta = chat.choices[0]?.delta;
+                    return (<ListItem key={delta.content} disablePadding sx={{ display: "flex", backgroundColor: activeIndex === chat.id ? '#EBF4FF' : '', borderRadius: '30px', mb: 1, m: 1 }}>
                       <ListItemButton
+                        onClick={() => handleListItemClick(chat.id)}
                         sx={[
                           {
                             minHeight: 48,
@@ -350,17 +365,22 @@ const LeftSide = (props: DrawerProps) => {
                             },
                             open
                               ? {
-                                mr: 3,
+                                mr: 1,
                               }
                               : {
                                 mr: "auto",
                               },
                           ]}
                         >
-                          <img src={message} alt="message" />
+                          <img src={message} alt="message"  />
+                         
                         </ListItemIcon>
                         <ListItemText
-                          primary={delta.content?.length > 40 ? delta.content?.slice(0, 40) + "..." : delta.content}
+                          primary={delta.content
+                            ? (delta.content.length > 40
+                              ? delta.content.slice(0, 40) + "..."
+                              : delta.content)
+                            : ""}
                           primaryTypographyProps={{ variant: "caption" }}
                           title={delta.content}
                           sx={[
@@ -374,8 +394,21 @@ const LeftSide = (props: DrawerProps) => {
                           ]}
                         />
                       </ListItemButton>
+                        {activeIndex === chat.id && (
+                             <ListItem disableGutters sx={{ p: 1, m: 1, justifyContent: "end", backgroundColor: '#8B81FF', borderRadius: '30px', width: 'auto'}}>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                <IconButton edge="end" aria-label="edit" size="small" color="primary"  sx={{ color: "#FFFFFF", p: 0.5 }}>
+                                  <EditIcon fontSize="small" sx={{ fontSize: 16 }} />
+                                </IconButton>
+                                <IconButton edge="end" aria-label="delete" size="small" color="error" sx={{ color: "#FFFFFF", p: 0.5 }}>
+                                  <DeleteIcon fontSize="small" sx={{ fontSize: 16 }}/>
+                                </IconButton>
+                              </Box>
+                              </ListItem>
+                           )}
                     </ListItem>
-                  )})
+                    )
+                  })
                 })}
               </List>
             </>
@@ -422,7 +455,6 @@ const LeftSide = (props: DrawerProps) => {
                     <Avatar sx={{ bgcolor: "#1976d2", width: 32, height: 32 }}>
                       <LogoutIcon sx={{ width: 15, height: 15 }} />
                     </Avatar>
-                    {/* <LogoutIcon /> */}
                   </Button>
                 </ListItem>
               </List>
