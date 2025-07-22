@@ -15,7 +15,8 @@ Example: A responsive AI chat interface built with React and Material UI, mimick
 
 - React + TypeScript
 - Material UI (MUI)
-- Vite / CRA (update based on your setup)
+- zustand for state management
+- Vite (update based on your setup)
 
 ## 📦 Installation
 
